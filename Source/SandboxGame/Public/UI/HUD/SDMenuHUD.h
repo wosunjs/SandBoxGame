@@ -6,6 +6,8 @@
 #include "GameFramework/HUD.h"
 #include "SDMenuHUD.generated.h"
 
+class SSDMenuHUDWidget;
+
 /**
  * 
  */
@@ -18,6 +20,7 @@ public:
 
 	ASDMenuHUD();
 
-	TSharedPtr<class SSDMenuHUDWidget> MenuHUDWidget;
+private:
+	TSharedPtr<SSDMenuHUDWidget> MenuHUDWidget;
 
 };

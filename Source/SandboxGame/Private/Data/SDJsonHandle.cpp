@@ -6,7 +6,12 @@
 
 SDJsonHandle::SDJsonHandle()
 {
+	// 初始化文件路径
 	RecordDataFileName = FString("RecordData.json");
+	ObjectAttrFileName = FString("ObjectAttribute.json");
+	ResourceAttrFileName = FString("ResourceAttribute.json");
+	CompoundTableFileName = FString("CompoundTable.json");
+
 	RelativePath = FString("Res/ConfigData/");
 
 }
@@ -97,6 +102,123 @@ void SDJsonHandle::UpdateRecordData(FString Culture, float MusicVolume, float So
 	WriteFileWithJsonData(RecordDataFileName, RelativePath, JsonStr);
 }
 
+void SDJsonHandle::ObjectAttrJsonRead(TMap<int, TSharedPtr<ObjectAttribute>>& ObjectAttrMap)
+{
+	// 先将Json文件中的数据读取到FString
+	FString JsonValue;
+	LoadStringFromFile(ObjectAttrFileName, RelativePath, JsonValue);
+
+	// 通过Json读取工厂类创建读取工具类实例
+	TSharedRef<TJsonReader<TCHAR>> JsonReader = TJsonReaderFactory<TCHAR>::Create(JsonValue);
+
+	// 通过FJsonSerializer提供的反序列化接口解析JsonReader到JsonParsed
+	TArray<TSharedPtr<FJsonValue>> JsonParsed;
+	if (FJsonSerializer::Deserialize(JsonReader, JsonParsed)) {
+		// 获取配置数据
+		for (int i = 0; i < JsonParsed.Num(); ++i) {
+			TArray<TSharedPtr<FJsonValue>> ObjectAttr = JsonParsed[i]->AsObject()->GetArrayField(FString::FromInt(i));
+			FText EN = FText::FromString(ObjectAttr[0]->AsObject()->GetStringField("EN"));
+			FText ZH = FText::FromString(ObjectAttr[1]->AsObject()->GetStringField("ZH"));
+			FString ObjectTypeStr = ObjectAttr[2]->AsObject()->GetStringField("ObjectType");
+			int PlantAttack = ObjectAttr[3]->AsObject()->GetIntegerField("PlantAttack");
+			int MetalAttack = ObjectAttr[4]->AsObject()->GetIntegerField("MetalAttcck");
+			int AnimalAttack = ObjectAttr[5]->AsObject()->GetIntegerField("AnimalAttack");
+			int AffectRange = ObjectAttr[6]->AsObject()->GetIntegerField("AffectRange");
+			FString TexPath = ObjectAttr[7]->AsObject()->GetStringField("TexPath");
+
+			EObjectType::Type ObjectType = StringToObjectType(ObjectTypeStr);
+			TSharedPtr<ObjectAttribute> ObjectAttrPtr = MakeShareable(new ObjectAttribute(EN, ZH, ObjectType
+				, PlantAttack, MetalAttack, AnimalAttack, AffectRange, TexPath));
+
+			ObjectAttrMap.Add(i, ObjectAttrPtr);
+		}
+	}
+	else {
+		SDHelper::Debug(FString("Deserialize Failed!"));
+	}
+}
+
+
+void SDJsonHandle::ResourceAttrJsonRead(TMap<int, TSharedPtr<ResourceAttribute>>& ResourceAttrMap)
+{
+	FString JsonValue;
+	LoadStringFromFile(ResourceAttrFileName, RelativePath, JsonValue);
+
+	TArray<TSharedPtr<FJsonValue>> JsonParsed;
+	TSharedRef<TJsonReader<TCHAR>> JsonReader = TJsonReaderFactory<TCHAR>::Create(JsonValue);
+
+	if (FJsonSerializer::Deserialize(JsonReader, JsonParsed)) {
+		for (int i = 0; i < JsonParsed.Num(); ++i) {
+			// 单个资源集合
+			TArray<TSharedPtr<FJsonValue>> ResourceAttr = JsonParsed[i]->AsObject()->GetArrayField(FString::FromInt(i+1));
+			// 解析英文名
+			FText EN = FText::FromString(ResourceAttr[0]->AsObject()->GetStringField("EN"));
+			// 解析中文名
+			FText ZH = FText::FromString(ResourceAttr[1]->AsObject()->GetStringField("ZH"));
+			
+			// 解析类型
+			EResourceType::Type ResourceType = StringToResourceType(ResourceAttr[2]->AsObject()->GetStringField("ResourceType"));
+			// 解析HP值
+			int HP = ResourceAttr[3]->AsObject()->GetIntegerField("HP");
+
+			// 解析掉落物集合
+			TArray<TArray<int>> FlobObjectInfoArray;
+			// 解析单个掉落物信息
+			TArray<TSharedPtr<FJsonValue>> FlobObjectInfo = ResourceAttr[4]->AsObject()->GetArrayField(FString("FlobObjectInfo"));
+			for (int j = 0; j < FlobObjectInfo.Num(); ++j) {
+				FString FlobObjectInfoItem = FlobObjectInfo[j]->AsObject()->GetStringField(FString::FromInt(j));
+				FString ObjectIndexStr;
+				FString RangeStr;
+				FString RangeMinStr;
+				FString RangeMaxStr;
+				FlobObjectInfoItem.Split(FString("_"), &ObjectIndexStr, &RangeStr);
+				RangeStr.Split(FString(","), &RangeMinStr, &RangeMaxStr);
+
+				TArray<int> FlobObjectInfoList;
+				FlobObjectInfoList.Add(FCString::Atoi(*ObjectIndexStr));
+				FlobObjectInfoList.Add(FCString::Atoi(*RangeMinStr));
+				FlobObjectInfoList.Add(FCString::Atoi(*RangeMaxStr));
+				// 将单个掉落物信息添加进集合
+				FlobObjectInfoArray.Add(FlobObjectInfoList);
+			}
+
+			TSharedPtr<ResourceAttribute> ResourceAttrPtr = MakeShareable(new ResourceAttribute(EN, ZH, ResourceType, HP, &FlobObjectInfoArray));
+			ResourceAttrMap.Add(i + 1, ResourceAttrPtr);
+		}
+	}
+	else {
+		SDHelper::Debug(FString("Deserialize Failed!"));
+	}
+}
+
+void SDJsonHandle::CompoundTableJsonRead(TArray<TSharedPtr<CompoundTable>>& CompoundTableMap)
+{
+	FString JsonValue;
+	LoadStringFromFile(CompoundTableFileName, RelativePath, JsonValue);
+
+	TArray<TSharedPtr<FJsonValue>> JsonParsed;
+	TSharedRef<TJsonReader<TCHAR>> JsonReader = TJsonReaderFactory<TCHAR>::Create(JsonValue);
+
+	if (FJsonSerializer::Deserialize(JsonReader, JsonParsed)) {
+		for (int i = 0; i < JsonParsed.Num(); ++i) {
+			TArray<TSharedPtr<FJsonValue>> ObjectAttr = JsonParsed[i]->AsObject()->GetArrayField(FString::FromInt(i));
+
+			TArray<int> CompoundTableAttr;
+			for (int j = 0; j < 10; ++j) {
+				CompoundTableAttr.Add(ObjectAttr[j]->AsObject()->GetIntegerField(FString::FromInt(j)));
+			}
+
+			TSharedPtr<CompoundTable> NewTable = MakeShareable(new CompoundTable(&CompoundTableAttr));
+
+			CompoundTableMap.Add(NewTable);
+		}
+	}
+	else {
+		SDHelper::Debug(FString("Compound Table Deserialize Failed!"));
+	}
+}
+
+
 bool SDJsonHandle::LoadStringFromFile(const FString& FileName, const FString& RelaPath, FString& ResultString)
 {
 	if (!FileName.IsEmpty()) {
@@ -147,5 +269,24 @@ bool SDJsonHandle::GetFStringInJsonData(const TSharedPtr<FJsonObject>& JsonObj, 
 		return true;
 	}
 	return false;
+}
+
+EObjectType::Type SDJsonHandle::StringToObjectType(const FString ArgStr)
+{
+	if (ArgStr.Equals(FString("Normal"))) return EObjectType::Normal;
+	else if (ArgStr.Equals(FString("Food"))) return EObjectType::Food;
+	else if (ArgStr.Equals(FString("Tool"))) return EObjectType::Tool;
+	else if (ArgStr.Equals(FString("Weapon"))) return EObjectType::Weapon;
+	
+	SDHelper::Debug(FString("EObjectType undefine!"));
+	return EObjectType::Type();
+}
+
+EResourceType::Type SDJsonHandle::StringToResourceType(const FString ArgStr)
+{
+	if (ArgStr.Equals(FString("Plant"))) return EResourceType::Plant;
+	else if (ArgStr.Equals(FString("Metal"))) return EResourceType::Metal;
+	else if (ArgStr.Equals(FString("Animal"))) return EResourceType::Animal;
+	return EResourceType::Type();
 }
 

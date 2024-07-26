@@ -15,6 +15,10 @@ class SANDBOXGAME_API ASDMenuGameMode : public AGameModeBase
 	GENERATED_BODY()
 	
 public:
-
 	ASDMenuGameMode();
+
+protected:
+	virtual void BeginPlay() override;
+
+
 };

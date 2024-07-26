@@ -60,6 +60,9 @@ private:
 	// 退出游戏
 	void QuitGame();
 
+	// 进入游戏
+	void EnterGame();
+
 private:
 	// 根节点指针
 	TSharedPtr<SBox> RootSizeBox;

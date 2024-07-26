@@ -17,7 +17,11 @@ public class SandboxGame : ModuleRules
 			"SlateCore",
 			"Json",
 			"JsonUtilities",
-		});
+			"UMG",
+			"AIModule",
+			"GameplayTasks",
+            "NavigationSystem"
+        });
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });
 

@@ -2,10 +2,14 @@
 
 
 #include "Data/SDDataHandle.h"
-#include "Internationalization/Internationalization.h"
 #include "Data/SDSingleton.h"
 #include "Data/SDJsonHandle.h"
-#include "common/SDHelper.h"
+#include "UI/Style/SDStyle.h"
+#include "UI/Style/SDMenuWidgetStyle.h"
+#include "UI/Style/SDGameWidgetStyle.h"
+#include "Common/SDHelper.h"
+#include "Internationalization/Internationalization.h"
+#include "Sound/SoundCue.h"
 
 TSharedPtr<SDDataHandle> SDDataHandle::DataInstance = nullptr;
 
@@ -42,18 +46,29 @@ void SDDataHandle::InitRecordData()
 	// 通过字符串获取Eeum值并初始化语言
 	ChangeLocalizationCulture(GetEnumValueFromString<ECultureTeam>(FString("ECultureTeam"), Culture));
 
+}
 
-	//// 尝试输出
-	//SDHelper::Debug(FString("Lan:") + Culture + FString("--") 
-	//	+ FString("Mus:") + FString::SanitizeFloat(MusicVolume) + FString("--")
-	//	+ FString("Sou:") + FString::SanitizeFloat(SoundVolume)
-	//	,20.f
-	//);
+void SDDataHandle::InitializeMenuAudio()
+{
+	// 通过SDStyle获取SDMenuWidgetStyle在编辑器中的MenuStyle
+	MenuStyle = &SDStyle::Get().GetWidgetStyle<FSDMenuStyle>("BPSDMenuStyle");
 
-	//// 循环读取RecordDataList
-	//for (TArray<FString>::TIterator It(RecordDataList); It; ++It) {
-	//	SDHelper::Debug(*It, 20.f);
-	//}
+	// 添加资源文件到资源列表
+	TArray<USoundCue*> MusicList;
+	MusicList.Add(Cast<USoundCue>(MenuStyle->MenuBackgroundMusic.GetResourceObject()));
+
+	TArray<USoundCue*> SoundList;
+	SoundList.Add(Cast<USoundCue>(MenuStyle->StartGameSound.GetResourceObject()));
+	SoundList.Add(Cast<USoundCue>(MenuStyle->ExitGameSound.GetResourceObject()));
+	SoundList.Add(Cast<USoundCue>(MenuStyle->MenuItemChangeSound.GetResourceObject()));
+
+	// 添加资源到Map中
+	MenuAudioResource.Add(FString("Music"), MusicList);
+	MenuAudioResource.Add(FString("Sound"), SoundList);
+
+	// 重置声音
+	ChangeVolume(MusicVolume, SoundVolume);
+
 }
 
 SDDataHandle::SDDataHandle()
@@ -61,6 +76,11 @@ SDDataHandle::SDDataHandle()
 	// 初始化为存档数据
 	InitRecordData();
 
+	// 初始化音乐数据
+	InitializeMenuAudio();
+
+	// 初始化游戏数据
+	InitGameData();
 }
 
 void SDDataHandle::ChangeLocalizationCulture(ECultureTeam Culture)
@@ -97,10 +117,21 @@ void SDDataHandle::ChangeVolume(float MusicValue, float SoundValue)
 	// 通过传入负数来提供接口共用给两个修改变量
 	if (MusicValue > 0) {
 		MusicVolume = MusicValue;
+
+		// 循环设置背景音乐音量
+		for (TArray<USoundCue*>::TIterator It(MenuAudioResource.Find(FString("Music"))->CreateIterator()); It; ++It) {
+			// 设置音量
+			(*It)->VolumeMultiplier = MusicVolume;
+		}
 	}
 
 	if (SoundValue > 0) {
 		SoundVolume = SoundValue;
+
+		// 循环设置音效音量
+		for (TArray<USoundCue*>::TIterator It(MenuAudioResource.Find(FString("Sound"))->CreateIterator()); It; ++It) {
+			(*It)->VolumeMultiplier = SoundVolume;
+		}
 	}
 
 	// 将修改写入文件
@@ -129,4 +160,41 @@ inline TEnum SDDataHandle::GetEnumValueFromString(const FString& Name, FString V
 	}
 
 	return (TEnum)EnumPtr->GetIndexByName(FName(*FString(Value)));
+}
+
+void SDDataHandle::InitGameData()
+{
+	// 依次完成游戏数据初始化
+	InitObjectAttr();		// 初始化物品属性
+	InitResourceAttrMap();	// 初始化资源属性
+	InitCompoundTableMap();	// 初始化合成表
+}
+
+void SDDataHandle::InitObjectAttr()
+{
+	SDSingleton<SDJsonHandle>::Get()->ObjectAttrJsonRead(ObjectAttrMap);
+
+	// 获取GameStyle
+	GameStyle = &SDStyle::Get().GetWidgetStyle<FSDGameStyle>("BPSDGameStyle");
+
+	// 填充笔刷数组
+	ObjectBrushList.Add(&GameStyle->EmptyBrush);
+	ObjectBrushList.Add(&GameStyle->ObjectBrush_1);
+	ObjectBrushList.Add(&GameStyle->ObjectBrush_2);
+	ObjectBrushList.Add(&GameStyle->ObjectBrush_3);
+	ObjectBrushList.Add(&GameStyle->ObjectBrush_4);
+	ObjectBrushList.Add(&GameStyle->ObjectBrush_5);
+	ObjectBrushList.Add(&GameStyle->ObjectBrush_6);
+	ObjectBrushList.Add(&GameStyle->ObjectBrush_7);
+	
+}
+
+void SDDataHandle::InitResourceAttrMap()
+{
+	SDSingleton<SDJsonHandle>::Get()->ResourceAttrJsonRead(ResourceAttrMap);
+}
+
+void SDDataHandle::InitCompoundTableMap()
+{
+	SDSingleton<SDJsonHandle>::Get()->CompoundTableJsonRead(CompoundTableMap);
 }

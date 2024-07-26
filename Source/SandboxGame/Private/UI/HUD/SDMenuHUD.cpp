@@ -13,7 +13,5 @@ ASDMenuHUD::ASDMenuHUD()
 		SAssignNew(MenuHUDWidget, SSDMenuHUDWidget);
 		// 添加到视口，通过SNew(XXX)创建SlateWidget，返回一个共享指针 (SAssignNew(指针,XXX)便不返回指针)
 		GEngine->GameViewport->AddViewportWidgetContent(SNew(SWeakWidget).PossiblyNullContent(MenuHUDWidget.ToSharedRef()));
-
-
 	}
 }

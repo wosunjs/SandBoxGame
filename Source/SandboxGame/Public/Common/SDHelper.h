@@ -33,8 +33,11 @@ namespace SDHelper {
 		FTimerDelegate Callback;
 		Callback.BindRaw(InUserObject, InMethod);
 
-		// 设置开启定时委托
-		World->GetTimerManager().SetTimer(Result, Callback, SoundDuration, false);
+		// 检查当前世界是否可用,如果可用设置开启定时委托
+		if (World != nullptr) {
+			World->GetTimerManager().SetTimer(Result, Callback, SoundDuration, false);
+		}
+		
 		return Result;
 	}
 }

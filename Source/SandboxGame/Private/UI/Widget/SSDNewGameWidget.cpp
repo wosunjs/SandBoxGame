@@ -2,9 +2,10 @@
 
 
 #include "UI/Widget/SSDNewGameWidget.h"
+#include "SlateOptMacros.h"
+
 #include "UI/Style/SDStyle.h"
 #include "UI/Style/SDMenuWidgetStyle.h"
-#include "SlateOptMacros.h"
 #include "Data/SDDataHandle.h"
 #include "Widgets/Input/SEditableTextBox.h"
 

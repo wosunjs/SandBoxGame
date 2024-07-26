@@ -43,3 +43,25 @@ SDInternation::Register(LOCTEXT("Sound", "Sound"));
 SDInternation::Register(LOCTEXT("GoBack", "GoBack"));
 
 #undef LOCTEXT_NAMESPACE
+
+
+#define LOCTEXT_NAMESPACE "SDGame"
+
+SDInternation::Register(LOCTEXT("E", "E"));	// 东
+SDInternation::Register(LOCTEXT("S", "S")); // 南
+SDInternation::Register(LOCTEXT("W", "W")); // 西
+SDInternation::Register(LOCTEXT("N", "N")); // 北
+
+SDInternation::Register(LOCTEXT("Player", "Player"));	// 玩家
+SDInternation::Register(LOCTEXT("Enemy", "Enemy"));		// 敌人
+
+SDInternation::Register(LOCTEXT("EnemyDialogue", ": Fight with me!"));	// 敌人对白
+SDInternation::Register(LOCTEXT("Send", "Send"));		// 发送
+
+SDInternation::Register(LOCTEXT("GameOption", "GameOption"));	// 游戏设置
+SDInternation::Register(LOCTEXT("SaveGame", "SaveGame"));		// 保存游戏
+SDInternation::Register(LOCTEXT("SaveCompleted", "SaveCompleted"));		// 保存成功
+SDInternation::Register(LOCTEXT("QuitGame", "QuitGame"));		// 退出游戏
+SDInternation::Register(LOCTEXT("GoBack", "GoBack"));	// 返回
+
+#undef LOCTEXT_NAMESPACE

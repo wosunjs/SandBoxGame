@@ -18,7 +18,7 @@ void SSDMenuHUDWidget::Construct(const FArguments& InArgs)
 	// 通过SDStyle获取SDMenuWidgetStyle在编辑器中的MenuStyle
 	MenuStyle = &SDStyle::Get().GetWidgetStyle<FSDMenuStyle>("BPSDMenuStyle");
 
-	// 绑定控件缩放规则方法
+	// 绑定控件随窗口大小缩放规则方法
 	UIScaler.Bind(this, &SSDMenuHUDWidget::GetUIScaler);
 	
 	ChildSlot

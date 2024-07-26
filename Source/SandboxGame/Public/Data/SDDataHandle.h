@@ -5,6 +5,10 @@
 #include "CoreMinimal.h"
 #include "Data/SDTypes.h"
 
+class USoundCue;
+struct FSDMenuStyle;
+struct FSDGameStyle;
+
 /**
  * 
  */
@@ -20,10 +24,14 @@ public:
 	// 修改中英文
 	void ChangeLocalizationCulture(ECultureTeam Culture);
 
+	// 获取本地化
 	ECultureTeam GetLocalizationCulture();
 
 	// 修改音量 
 	void ChangeVolume(float MusicValue, float SoundValue);
+
+	// 游戏数据初始化
+	void InitGameData();
 
 public:
 	// 音量
@@ -38,12 +46,25 @@ public:
 	// 当前存档名
 	FString RecordName;
 
+	// 物品属性集合
+	TMap<int, TSharedPtr<ObjectAttribute>> ObjectAttrMap;
+
+	// 物品贴图资源数组
+	TArray<const FSlateBrush*> ObjectBrushList;
+
+	// 资源属性集合
+	TMap<int, TSharedPtr<ResourceAttribute>> ResourceAttrMap;
+
+	// 合成表图
+	TArray<TSharedPtr<CompoundTable>> CompoundTableMap;
+
 protected:
 	// 本地化语言
 	ECultureTeam CurrentCulture;
 
 private:
-	static TSharedPtr<SDDataHandle> Create();	// 单例创建
+	// 单例创建
+	static TSharedPtr<SDDataHandle> Create();
 
 	// 获取存档数据进行初始化
 	void InitRecordData();
@@ -56,7 +77,30 @@ private:
 	template<typename TEnum>
 	TEnum GetEnumValueFromString(const FString& Name, FString Value);
 
+	// 初始化Menu声音数据
+	void InitializeMenuAudio();
+
+	// 初始化物品属性集合
+	void InitObjectAttr();
+
+	// 初始化资源属性图
+	void InitResourceAttrMap();
+
+	// 初始化合成表图
+	void InitCompoundTableMap();
+
 private:
 	static TSharedPtr<SDDataHandle> DataInstance;	// 单例实例
+
+	// 获取Menu样式
+	const FSDMenuStyle* MenuStyle;
+
+	// 获取Game样式
+	const FSDGameStyle* GameStyle;
+
+	// 保存Menu的声音资源
+	TMap<FString, TArray<USoundCue*>> MenuAudioResource;
+
+	//
 
 };

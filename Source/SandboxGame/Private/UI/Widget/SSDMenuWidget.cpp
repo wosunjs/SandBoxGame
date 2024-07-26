@@ -17,6 +17,7 @@
 #include "GamePlay/SDMenuController.h"
 #include "Common/SDHelper.h"
 #include <Kismet/GameplayStatics.h>
+#include "GameFramework/Actor.h"
 
 struct MenuGroup
 {
@@ -104,6 +105,7 @@ void SSDMenuWidget::Construct(const FArguments& InArgs)
 	InitializeMenuList();
 
 	InitializedAnimation();
+	
 }
 
 void SSDMenuWidget::Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime)
@@ -174,8 +176,8 @@ void SSDMenuWidget::MenuIteamOnclicked(EMenuItem::Type ItemType)
 		break;
 	case EMenuItem::QuitGame:
 		// 播放音乐，完毕后关闭
-		SDHelper::PlayerSoundAndCall(UGameplayStatics::GetPlayerController(GWorld, 0)->GetWorld(),
-			MenuStyle->ExitGameSound, this, &SSDMenuWidget::QuitGame);
+		SDHelper::PlayerSoundAndCall(GWorld, MenuStyle->ExitGameSound, this, &SSDMenuWidget::QuitGame);
+		
 		ControlLocked = false;
 		break;
 	case EMenuItem::NewGame:
@@ -197,10 +199,22 @@ void SSDMenuWidget::MenuIteamOnclicked(EMenuItem::Type ItemType)
 		PlayClose(EMenuType::StartGame);
 		break;
 	case EMenuItem::EnterGame:
-		ControlLocked = false;
+		// 检测是否(新存档名合法)可以进入游戏
+		if (NewGameWidget->AllowEnterGame()) {
+			// 播放音乐，进入游戏
+			SDHelper::PlayerSoundAndCall(GWorld, MenuStyle->StartGameSound, this, &SSDMenuWidget::EnterGame);
+		}
+		else {
+			// 按钮解锁
+			ControlLocked = false;
+		}
+		
 		break;
 	case EMenuItem::EnterRecord:
-		ControlLocked = false;
+		// 选择存档后，如果有修改存档名，我们直接将其修改并加以保存
+		ChooseRecordWidget->UpdateRecordName();
+
+		SDHelper::PlayerSoundAndCall(GWorld, MenuStyle->StartGameSound, this, &SSDMenuWidget::EnterGame);
 		break;
 	}
 }
@@ -214,6 +228,8 @@ void SSDMenuWidget::ChangeVolume(const float MusicVolume, const float SoundVolum
 {
 	SDDataHandle::Get()->ChangeVolume(MusicVolume, SoundVolume);
 }
+
+
 
 void SSDMenuWidget::InitializeMenuList()
 {
@@ -326,9 +342,9 @@ void SSDMenuWidget::ResetWidgetSize(float NewWidget, float NewHeight = 0.f)
 void SSDMenuWidget::InitializedAnimation()
 {
 	// 开始延时
-	const float StartDelay = 0.3f;
+	const float StartDelay = 0.2f;
 	// 持续时间
-	const float AnimDuration = 0.6f;
+	const float AnimDuration = 0.4f;
 
 	// 实例化动画播放器
 	MenuAnimation = FCurveSequence();
@@ -376,4 +392,12 @@ void SSDMenuWidget::QuitGame()
 	// 通过PlayerController获取
 	Cast<ASDMenuController>(UGameplayStatics::GetPlayerController(GWorld, 0))->ConsoleCommand("quit");
 
+}
+
+void SSDMenuWidget::EnterGame()
+{
+	UGameplayStatics::OpenLevel(GWorld, FName("GameMap"));
+
+	// 播放完音乐后按钮解锁
+	ControlLocked = false;
 }
